@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using AzureFunctions.Models;
+using AzureFunctions.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
@@ -9,11 +10,18 @@ namespace AzureFunctions;
 
 public class HttpTrigger
 {
+    private readonly CosmosDbService _cosmosDbService;
     private readonly ILogger _logger;
 
     public HttpTrigger(ILoggerFactory loggerFactory)
     {
         _logger = loggerFactory.CreateLogger<HttpTrigger>();
+        var connectionString = Environment.GetEnvironmentVariable("CosmosDbConnectionString") ?? 
+                               throw new ArgumentNullException();
+        var databaseName = Environment.GetEnvironmentVariable("CosmosDbDatabaseName") ??
+                           throw new ArgumentNullException();
+        const string containerName = "Orders";
+        _cosmosDbService = new CosmosDbService(connectionString, databaseName, containerName);
     }
 
     [Function("HttpTrigger")]
@@ -24,13 +32,22 @@ public class HttpTrigger
 
         var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         var order = JsonConvert.DeserializeObject<Order>(requestBody);
+
+        if (order is null)
+        {
+            _logger.LogError("Order processing failed. Order has insufficient information.");
+            return req.CreateResponse(HttpStatusCode.BadRequest);
+        }
         
-            // TODO: Save order to CosmosDB and add message to Azure Queue
+        _logger.LogInformation("Saving order to CosmosDB.");
+        await _cosmosDbService.AddOrderAsync(order);
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
-            response.WriteString("Order received and is being processed.");
+        // TODO: Add Message to Azure Queue
 
-            return response;
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+        response.WriteString("Order received and is being processed.");
+
+        return response;
     }
 }
