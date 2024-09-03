@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 using Azure.Storage.Queues;
 using AzureFunctions.Models;
 using AzureFunctions.Services;
@@ -55,7 +56,8 @@ public class HttpTrigger
 
         var queueMessage = JsonConvert.SerializeObject(order);
         _logger.LogInformation("Sending Queue Message.");
-        await _queueClient.SendMessageAsync(queueMessage);
+        var bytes = Encoding.UTF8.GetBytes(queueMessage);
+        await _queueClient.SendMessageAsync(Convert.ToBase64String(bytes));
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         response.Headers.Add("Content-Type", "application/json; charset=utf-8");

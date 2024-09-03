@@ -19,4 +19,9 @@ public class CosmosDbService
     {
         await _container.CreateItemAsync(order, new PartitionKey(order.Id));
     }
+
+    public async Task UpdateOrderAsync(Order order)
+    {
+        await _container.UpsertItemAsync(order, new PartitionKey(order.Id));
+    }
 }
