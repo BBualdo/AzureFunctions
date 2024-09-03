@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text;
 using Azure.Storage.Queues;
+using AzureFunctions.Helpers;
 using AzureFunctions.Models;
 using AzureFunctions.Services;
 using Microsoft.Azure.Functions.Worker;

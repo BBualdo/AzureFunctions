@@ -3,16 +3,16 @@ using Azure.Storage.Blobs;
 
 namespace AzureFunctions.Services;
 
-public class SalesReportService
+public class BlobService
 {
     private readonly BlobServiceClient _blobServiceClient;
 
-    public SalesReportService(string connectionString)
+    public BlobService(string connectionString)
     {
         _blobServiceClient = new BlobServiceClient(connectionString);
     }
 
-    public async Task SaveReportAsync(string containerName, string fileName, string reportContent)
+    public async Task UploadAsync(string containerName, string fileName, string reportContent)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         await containerClient.CreateIfNotExistsAsync();

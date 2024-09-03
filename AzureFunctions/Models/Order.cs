@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using AzureFunctions.Helpers;
+using Newtonsoft.Json;
 
 namespace AzureFunctions.Models;
 

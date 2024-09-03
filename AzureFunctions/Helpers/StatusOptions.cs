@@ -1,4 +1,4 @@
-﻿namespace AzureFunctions;
+﻿namespace AzureFunctions.Helpers;
 
 public enum StatusOptions
 {

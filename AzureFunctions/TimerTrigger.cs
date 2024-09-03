@@ -9,7 +9,6 @@ public class TimerTrigger
 {
     private readonly CosmosDbService _cosmosDbService;
     private readonly ILogger _logger;
-    private readonly SalesReportService _salesReportService;
 
     public TimerTrigger(ILoggerFactory loggerFactory)
     {
@@ -20,10 +19,6 @@ public class TimerTrigger
                            throw new ArgumentNullException();
         const string containerName = "Orders";
         _cosmosDbService = new CosmosDbService(connectionString, databaseName, containerName);
-
-        var blobConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage") ??
-                                   throw new ArgumentNullException();
-        _salesReportService = new SalesReportService(blobConnectionString);
     }
 
     [Function("TimerTrigger")]
@@ -41,9 +36,10 @@ public class TimerTrigger
         foreach (var order in orders)
             reportBuilder.AppendLine($"{order.Id}\t{order.ProductName}\t{order.Quantity}\t{order.Price:C}");
 
-        var fileName = $"sales-report-{date:yyyy-MM-dd}.txt";
-        await _salesReportService.SaveReportAsync("sales-report", fileName, reportBuilder.ToString());
+        // Saving report locally
+        var reportPath = Path.Combine(Environment.CurrentDirectory, $"SalesReport_{DateTime.UtcNow:yyyyMMdd}.txt");
+        await File.WriteAllTextAsync(reportPath, reportBuilder.ToString());
 
-        _logger.LogInformation($"Sales report generated and saved to Blob Storage: {fileName}");
+        _logger.LogInformation($"Sales report generated and saved to: {reportPath}");
     }
 }
