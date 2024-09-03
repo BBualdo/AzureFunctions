@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using AzureFunctions.Helpers;
+using AzureFunctions.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -16,29 +16,25 @@ public class CosmosDbTrigger
 
     [Function("CosmosDbTrigger")]
     public void Run([CosmosDBTrigger(
-            databaseName: "databaseName",
-            containerName: "containerName",
-            Connection = "",
+            databaseName: "AzureFunctionsDb",
+            containerName: "Orders",
+            Connection = "CosmosDbConnectionString",
             LeaseContainerName = "leases")]
-        IReadOnlyList<MyDocument> input, FunctionContext context)
+        IReadOnlyList<Order> input, FunctionContext context)
     {
-        if (input != null && input.Count > 0)
+        if (input is { Count: > 0 })
         {
-            _logger.LogInformation("Documents modified: " + input.Count);
-            _logger.LogInformation("First document Id: " + input[0].Id);
+            foreach (var order in input)
+            {
+                _logger.LogInformation($"Processing order {order.Id} with status {order.Status}");
+                if (order.Status == StatusOptions.OrderShipped)
+                {
+                    _logger.LogInformation($"Updating inventory for order {order.Id}...");
+                    // Updating inventory
+                }
+            }
         }
 
         
     }
-}
-
-public class MyDocument
-{
-    public string Id { get; set; }
-
-    public string Text { get; set; }
-
-    public int Number { get; set; }
-
-    public bool Boolean { get; set; }
 }
