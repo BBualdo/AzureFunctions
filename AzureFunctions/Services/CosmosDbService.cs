@@ -24,4 +24,22 @@ public class CosmosDbService
     {
         await _container.UpsertItemAsync(order, new PartitionKey(order.Id));
     }
+
+    public async Task<IEnumerable<Order>> GetOrdersFromDateAsync(DateTime date)
+    {
+        var query = new QueryDefinition("SELECT * FROM c WHERE c._ts >= @startOfDay AND c._ts < @endOfDay")
+            .WithParameter("@startOfDay", new DateTimeOffset(date).ToUnixTimeSeconds())
+            .WithParameter("@endOfDay", new DateTimeOffset(date.AddDays(1)).ToUnixTimeSeconds());
+
+        var iterator = _container.GetItemQueryIterator<Order>(query);
+        var orders = new List<Order>();
+
+        while (iterator.HasMoreResults)
+        {
+            var response = await iterator.ReadNextAsync();
+            orders.AddRange(response.ToList());
+        }
+
+        return orders;
+    }
 }
